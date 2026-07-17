@@ -608,6 +608,13 @@ BASE_STYLE = """
   .trust b{color:#eaf2fb}
   .stars{color:#ffc531;letter-spacing:1px}
 
+  /* live open/closed status */
+  .livebar{display:inline-flex;align-items:center;gap:9px;background:rgba(10,22,38,.72);border:1px solid var(--line);border-radius:999px;padding:7px 15px 7px 13px;font-size:13.5px;font-weight:600;color:#eaf2fb;margin-bottom:2px}
+  .livebar .dot{width:9px;height:9px;border-radius:50%;background:#25d366;box-shadow:0 0 0 0 rgba(37,211,102,.55);animation:pulse 1.8s infinite;flex:none}
+  .livebar.closed .dot{background:#f0a52c;animation:none}
+  .livebar b{font-weight:800}
+  .livebar .sub{color:var(--mut);font-weight:500}
+
   /* hero phone with reel */
   .phone{position:relative;justify-self:center;width:300px;max-width:100%;border-radius:34px;padding:10px;background:linear-gradient(160deg,#16304f,#0b1626);border:1px solid var(--line);box-shadow:0 40px 90px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.03)}
   .phone video{width:100%;aspect-ratio:9/19.5;object-fit:cover;border-radius:26px;background:#000;display:block}
@@ -692,6 +699,19 @@ BASE_STYLE = """
   .areas{display:flex;gap:8px;flex-wrap:wrap}
   .chip{font-size:13px;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:8px 13px;color:#dbe7f6;background:rgba(255,255,255,.02)}
   .cov-note{margin-top:18px;color:var(--mut);font-size:14px}
+  .pc-check{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:18px}
+  .pc-check label{display:block;font-size:12.5px;font-weight:700;color:#8fa3bd;text-transform:uppercase;letter-spacing:.07em;margin-bottom:11px}
+  .pc-row{display:flex;gap:8px}
+  .pc-row input{flex:1;min-width:0;background:#0a1830;border:1px solid var(--line);border-radius:11px;padding:13px 14px;color:#eaf2fb;font-family:inherit;font-size:15px;text-transform:uppercase;letter-spacing:.04em}
+  .pc-row input::placeholder{color:#5f7690;text-transform:none;letter-spacing:0}
+  .pc-row input:focus{outline:none;border-color:var(--cyan)}
+  .pc-row button{background:linear-gradient(135deg,var(--cyan-dk),var(--cyan));color:#04121e;border:0;border-radius:11px;padding:0 22px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .pc-out{margin-top:14px;font-size:14px;line-height:1.55;display:none}
+  .pc-out.show{display:block}
+  .pc-out.yes{color:#c2f0d6}.pc-out.maybe{color:#ffe3ab}
+  .pc-out b{color:#fff}
+  .pc-out a.wa-link{color:var(--cyan);font-weight:700;text-decoration:none;display:inline-block;margin-top:4px}
+  .pc-out a.wa-link:hover{text-decoration:underline}
 
   /* cta band */
   .ctaband{background:linear-gradient(135deg,#0c2036,#0a1626);border:1px solid var(--line);border-radius:24px;padding:44px;text-align:center;position:relative;overflow:hidden}
@@ -716,13 +736,26 @@ BASE_STYLE = """
   .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}.reveal.in{opacity:1;transform:none}
 
   @media(max-width:900px){
-    .hero-inner{grid-template-columns:1fr;gap:34px}
-    .phone{width:270px;order:-1}
+    .hero-inner{grid-template-columns:1fr;gap:22px}
+    .phone{width:188px;order:0;margin:2px auto 0}
     .quote{grid-template-columns:1fr}.quote .right{border-left:0;border-top:1px solid var(--line)}
     .cov{grid-template-columns:1fr}
     .links a:not(.navcta):not(.navsoc){display:none}
   }
-  @media(max-width:560px){ section{padding:56px 0} .wrap{padding:0 18px} }
+  @media(max-width:560px){
+    section{padding:44px 0}
+    .hero{padding:32px 0 38px}
+    .wrap{padding:0 18px}
+    .phone{width:154px;padding:6px;border-radius:26px}
+    .phone .notch{width:64px;height:14px;top:14px}
+    .phone .live{left:11px;bottom:11px;padding:5px 9px;font-size:10.5px}
+    .reels{grid-template-columns:1fr 1fr;gap:10px}
+    .reel{border-radius:14px}
+    .reel .cap{font-size:10.5px;left:8px;bottom:8px;padding:4px 8px}
+    .reel .play svg{width:38px;height:38px}
+    .strip .row{gap:26px}
+    .cov-map,#covmap{min-height:260px}
+  }
 </style>
 """
 
@@ -787,6 +820,24 @@ REVEAL_JS = """
     });
     v.addEventListener('ended',function(){r.classList.remove('playing')});
   });
+  // live open/closed status — real hours 8am–10pm, every day
+  (function(){
+    var bar=document.getElementById('livebar'), txt=document.getElementById('livetxt');
+    if(!bar||!txt) return;
+    var OPEN=8, CLOSE=22;
+    function upd(){
+      var n=new Date(), h=n.getHours()+n.getMinutes()/60;
+      if(h>=OPEN && h<CLOSE){
+        bar.classList.remove('closed');
+        txt.innerHTML='<b>Open now</b> <span class="sub">· we usually reply within minutes</span>';
+      } else {
+        bar.classList.add('closed');
+        var when = h<OPEN ? 'opens 8am' : 'back at 8am';
+        txt.innerHTML='<b>Closed right now</b> <span class="sub">· '+when+' — leave a message and we\\'ll reply first thing</span>';
+      }
+    }
+    upd(); setInterval(upd,60000);
+  })();
 })();
 </script>
 """
@@ -960,13 +1011,60 @@ def coverage_section():
     <div class="cov reveal">
       <div class="cov-map"><div id="covmap"></div></div>
       <div class="cov-list">
+        <div class="pc-check">
+          <label>Check we cover your postcode</label>
+          <div class="pc-row">
+            <input id="pc-in" placeholder="e.g. SW6 7EN" autocomplete="postal-code" inputmode="text" maxlength="8"/>
+            <button id="pc-btn" type="button">Check</button>
+          </div>
+          <div id="pc-out" class="pc-out"></div>
+        </div>
         <span class="cov-pill">📍 {BIZ['base']}</span>
         <div class="areas">{chips}</div>
-        <p class="cov-note">Not sure if we reach you? Ask the assistant or drop us a WhatsApp — if you're anywhere near West London, chances are we're there {BIZ['hours'].split(',')[1].strip()}.</p>
       </div>
     </div>
   </div>
 </section>
+<script>
+(function(){{
+  var WA="{BIZ['wa'].lstrip('+')}";
+  var CORE=['SW6','SW10','SW5','SW3','SW7','W6','W14','W12','W4','W8','SW11','SW13','SW15','SW18'];
+  var NEAR=['NW','WC','EC','SE','TW','KT','SM','CR','UB','HA'];
+  var input=document.getElementById('pc-in');
+  var out=document.getElementById('pc-out');
+  if(!input) return;
+  function districtOf(pc){{
+    pc=(pc||'').toUpperCase().replace(/\\s+/g,'');
+    if(pc.length<5) return null;                 // full UK postcode is 5-7 chars
+    var outward=pc.slice(0,pc.length-3);         // inward code is always 3 chars
+    if(!/^[A-Z]{{1,2}}[0-9][A-Z0-9]?$/.test(outward)) return null;
+    return outward;
+  }}
+  function areaOf(d){{ var m=d.match(/^[A-Z]+/); return m?m[0]:''; }}
+  function link(t){{ return " <a class='wa-link' href='https://wa.me/"+WA+"' target='_blank' rel='noopener'>"+t+" &rarr;</a>"; }}
+  function check(){{
+    var d=districtOf(input.value);
+    out.className='pc-out show';
+    if(!d){{ out.classList.add('maybe'); out.innerHTML="Pop your full postcode in and we'll check — e.g. <b>SW6 7EN</b>."; return; }}
+    var area=areaOf(d);
+    if(CORE.indexOf(d)>-1){{
+      out.classList.add('yes');
+      out.innerHTML="✅ <b>"+d+" &mdash; you're right in our patch.</b> We're on jobs round here most days."+link("Book a slot on WhatsApp");
+    }} else if(area==='SW'||area==='W'){{
+      out.classList.add('yes');
+      out.innerHTML="✅ <b>"+d+" &mdash; yes, we cover you.</b> Well inside our West / South-West London area."+link("Grab a time on WhatsApp");
+    }} else if(NEAR.indexOf(area)>-1){{
+      out.classList.add('yes');
+      out.innerHTML="✅ <b>"+d+" &mdash; we can usually reach you.</b> Send the job over and we'll confirm a slot."+link("Ask on WhatsApp");
+    }} else {{
+      out.classList.add('maybe');
+      out.innerHTML="🤔 <b>"+d+" is a bit outside our usual patch.</b> Message us anyway &mdash; if we can make it work, we will."+link("Check with us");
+    }}
+  }}
+  document.getElementById('pc-btn').addEventListener('click',check);
+  input.addEventListener('keydown',function(e){{ if(e.key==='Enter'){{ e.preventDefault(); check(); }} }});
+}})();
+</script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -1133,6 +1231,7 @@ def home_body():
   <div class="wrap hero-inner">
     <div>
       <div class="eyebrow">Fulham &amp; West London · since {BIZ['since']}</div>
+      <div class="livebar" id="livebar"><span class="dot"></span><span id="livetxt">Checking hours…</span></div>
       <h1>Everything, <span class="g">up on the wall.</span><br>Done clean, done right.</h1>
       <p class="lede">TVs, mirrors, art, shelves, flat-pack and property fixes across West London — by a team that turns up on time, wears shoe covers and hoovers up after. Get a price in seconds.</p>
       <div class="btns">
