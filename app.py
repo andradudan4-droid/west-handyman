@@ -1487,6 +1487,34 @@ def quote_api():
     })
 
 
+@app.route("/diag")
+def diag():
+    """Temporary self-check. Visit /diag to see if the chat bot can reach Groq.
+    Reveals only whether keys are PRESENT (never the key values)."""
+    import groq as _g
+    info = {
+        "groq_key_present": bool(os.environ.get("GROQ_API_KEY")),
+        "resend_key_present": bool(RESEND_API_KEY),
+        "groq_sdk_version": getattr(_g, "__version__", "unknown"),
+        "model": MODEL,
+    }
+    try:
+        r = client_chat(
+            model=MODEL,
+            messages=[{"role": "user", "content": "Reply with the single word: ok"}],
+            max_tokens=5,
+            temperature=0,
+            timeout=20,
+        )
+        info["groq_call"] = "SUCCESS"
+        info["groq_reply"] = (r.choices[0].message.content or "").strip()
+    except Exception as e:
+        info["groq_call"] = "FAILED"
+        info["error_type"] = type(e).__name__
+        info["error_message"] = str(e)[:400]
+    return jsonify(info)
+
+
 @app.route("/sitemap.xml")
 def sitemap():
     pages = ["/", "/services", "/rates", "/contact", "/privacy-policy"]
