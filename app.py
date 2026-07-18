@@ -115,6 +115,12 @@ def client_chat(**kwargs):
     return _groq_client.chat.completions.create(**kwargs)
 
 
+# Groq chat model. llama-3.3-70b-versatile was retired for free/developer tier
+# (June 2026); openai/gpt-oss-120b is Groq's recommended production replacement.
+# Change this one line to swap the model across the whole site.
+MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+
+
 # ---------------------------------------------------------------------------
 #  Email (Resend over HTTPS - Render's free tier blocks SMTP)
 # ---------------------------------------------------------------------------
@@ -241,7 +247,7 @@ Other notes:"""
 def summarise_lead(conversation):
     try:
         resp = client_chat(
-            model="llama-3.3-70b-versatile",
+            model=MODEL,
             messages=[
                 {"role": "system", "content": LEAD_SUMMARY_PROMPT},
                 {"role": "user", "content": _transcript(conversation)},
@@ -740,7 +746,7 @@ BASE_STYLE = """
     .phone{width:188px;order:0;margin:2px auto 0}
     .quote{grid-template-columns:1fr}.quote .right{border-left:0;border-top:1px solid var(--line)}
     .cov{grid-template-columns:1fr}
-    .links a:not(.navcta):not(.navsoc){display:none}
+    .links a:not(.navcta){display:none}
   }
   @media(max-width:560px){
     section{padding:44px 0}
@@ -827,13 +833,11 @@ REVEAL_JS = """
     var OPEN=8, CLOSE=22;
     function upd(){
       var n=new Date(), h=n.getHours()+n.getMinutes()/60;
+      bar.classList.remove('closed');
       if(h>=OPEN && h<CLOSE){
-        bar.classList.remove('closed');
-        txt.innerHTML='<b>Open now</b> <span class="sub">· we usually reply within minutes</span>';
+        txt.innerHTML='<b>Open now</b> <span class="sub">· replies in minutes</span>';
       } else {
-        bar.classList.add('closed');
-        var when = h<OPEN ? 'opens 8am' : 'back at 8am';
-        txt.innerHTML='<b>Closed right now</b> <span class="sub">· '+when+' — leave a message and we\\'ll reply first thing</span>';
+        txt.innerHTML='<b>Online 24/7</b> <span class="sub">· instant quotes anytime</span>';
       }
     }
     upd(); setInterval(upd,60000);
@@ -1531,18 +1535,20 @@ def chat_endpoint():
 
     try:
         response = client_chat(
-            model="llama-3.3-70b-versatile",
+            model=MODEL,
             messages=conversation,
             max_tokens=270,
             temperature=0.6,
             timeout=20,
         )
-        ai_reply = response.choices[0].message.content
+        ai_reply = response.choices[0].message.content or ""
     except Exception as e:
         print(f"Chat completion failed: {e}")
         conversation.pop()
         return jsonify({"reply": "Sorry, had a brief hiccup there — could you send that again?"})
 
+    # defensive: strip any stray reasoning markers some models emit
+    ai_reply = re.sub(r"<think>.*?</think>", "", ai_reply, flags=re.I | re.S).strip()
     lead_ready = bool(re.search(r"\[\[?\s*READY\s*\]?\]", ai_reply, re.I))
     ai_reply = re.sub(r"\[\[?\s*READY\s*\]?\]", "", ai_reply)
     ai_reply = ai_reply.replace("[LEAD_CAPTURED]", "").strip()
