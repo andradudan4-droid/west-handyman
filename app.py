@@ -814,6 +814,9 @@ WA_FLOAT = f"""
 
 REVEAL_JS = """
 <script>
+// always open at the top on a fresh load; let #anchors (e.g. Reviews link) still work
+if('scrollRestoration' in history){history.scrollRestoration='manual';}
+window.addEventListener('load',function(){if(!location.hash){window.scrollTo(0,0);}});
 (function(){
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
   document.querySelectorAll('.reveal').forEach(function(el){io.observe(el)});
